@@ -16,7 +16,7 @@
         <div>
           <span class="mark">⚙</span>
           <h1>لوحة المدير</h1>
-          <p>الصلاحية الحالية: <strong>{{ 'المالك' if role == 'owner' else 'الصديق' }}</strong></p>
+          <p>الصلاحية الحالية: <strong>{{ 'المالك' if role == 'owner' else 'المدير' }}</strong></p>
         </div>
         <form method="post" action="{{ url_for('create_code') }}">
           <select name="duration">
@@ -32,15 +32,6 @@
           <div class="alert {{ category }}">{{ message }}</div>
         {% endfor %}
       {% endwith %}
-      {% if role == 'owner' %}
-        <div class="panel">
-          <h2>صلاحية خويك</h2>
-          <p>إذا عطلتها، لن يستطيع الدخول بالمفتاح الخاص به.</p>
-          <form method="post" action="{{ url_for('toggle_friend') }}">
-            <button class="{{ 'danger' if friend_enabled else '' }}">{{ 'تعطيل دخول خويي' if friend_enabled else 'تفعيل دخول خويي' }}</button>
-          </form>
-        </div>
-      {% endif %}
       <div class="table-wrap">
         <table>
           <thead>
@@ -56,7 +47,7 @@
             {% for code in codes %}
               <tr>
                 <td><code>{{ code['code'] }}</code></td>
-                <td>{{ 'المالك' if code['created_by']=='owner' else 'خويك' }}</td>
+                <td>{{ 'المالك' if code['created_by']=='owner' else 'المدير' }}</td>
                 <td>{{ durations[code['duration']][0] }}</td>
                 <td><span class="status {{ 'good' if status(code)=='فعال' else 'bad' }}">{{ status(code) }}</span></td>
                 <td>
