@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>hh35 | لوحة المدير</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  </head>
+  <body>
+    <header>
+      <span>حقوقي دس hh35.</span>
+      <a href="{{ url_for('logout') }}">خروج</a>
+    </header>
+    <main class="wide">
+      <div class="title-row">
+        <div>
+          <span class="mark">⚙</span>
+          <h1>لوحة المدير</h1>
+          <p>الصلاحية الحالية: <strong>{{ 'المالك' if role == 'owner' else 'الصديق' }}</strong></p>
+        </div>
+        <form method="post" action="{{ url_for('create_code') }}">
+          <select name="duration">
+            {% for key, item in durations.items() %}
+              <option value="{{ key }}">{{ item[0] }}</option>
+            {% endfor %}
+          </select>
+          <button>إنشاء كود</button>
+        </form>
+      </div>
+      {% with messages = get_flashed_messages(with_categories=true) %}
+        {% for category, message in messages %}
+          <div class="alert {{ category }}">{{ message }}</div>
+        {% endfor %}
+      {% endwith %}
+      {% if role == 'owner' %}
+        <div class="panel">
+          <h2>صلاحية خويك</h2>
+          <p>إذا عطلتها، لن يستطيع الدخول بالمفتاح الخاص به.</p>
+          <form method="post" action="{{ url_for('toggle_friend') }}">
+            <button class="{{ 'danger' if friend_enabled else '' }}">{{ 'تعطيل دخول خويي' if friend_enabled else 'تفعيل دخول خويي' }}</button>
+          </form>
+        </div>
+      {% endif %}
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>الكود</th>
+              <th>المنشئ</th>
+              <th>المدة</th>
+              <th>الحالة</th>
+              <th>إجراء</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for code in codes %}
+              <tr>
+                <td><code>{{ code['code'] }}</code></td>
+                <td>{{ 'المالك' if code['created_by']=='owner' else 'خويك' }}</td>
+                <td>{{ durations[code['duration']][0] }}</td>
+                <td><span class="status {{ 'good' if status(code)=='فعال' else 'bad' }}">{{ status(code) }}</span></td>
+                <td>
+                  <form class="inline" method="post" action="{{ url_for('disable_code', code_id=code['id']) }}"><button class="danger">تعطيل</button></form>
+                  <form class="inline" method="post" action="{{ url_for('delete_code', code_id=code['id']) }}"><button class="danger outline">حذف</button></form>
+                </td>
+              </tr>
+            {% else %}
+              <tr><td colspan="5">لا توجد أكواد.</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </main>
+  </body>
+</html>
