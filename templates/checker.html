@@ -1,52 +1,94 @@
 <!doctype html>
 <html lang="ar" dir="rtl">
-  <head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width,initial-scale=1">
-    <title>hh35 | فحص الاسم</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
-  </head>
-  <body>
-    <header>
-      <span>حقوقي دس hh35.</span>
-      <a href="{{ url_for('home') }}">الرئيسية</a>
-    </header>
-    <main class="wide">
-      <div class="panel">
-        <h1>فحص الاختصار</h1>
-        <p>اكتب الاختصار فقط، مثل <code>hh35</code> — لا تحتاج إلى كتابة discord.gg/.</p>
-        <form method="post" class="checker-form">
-          <select name="kind">
-            <option value="invite">اختصار دعوة Discord</option>
-            <option value="username">اسم/اختصار في الأدلة</option>
-          </select>
-          <input name="value" placeholder="hh35" required>
-          <button>فحص</button>
-        </form>
-      </div>
-      {% if results %}
-        <div class="results-box">
-          <h2>النتائج</h2>
-          <table>
-            <thead>
-              <tr>
-                <th>المصدر</th>
-                <th>الحالة</th>
-                <th>التفاصيل</th>
-              </tr>
-            </thead>
-            <tbody>
-              {% for row in results %}
-                <tr>
-                  <td>{{ row.name }}</td>
-                  <td class="status {{ 'used' if row.status == 'مستخدم' else 'safe' if row.status == 'غير موجود' else 'unknown' }}">{{ row.status }}</td>
-                  <td>{{ row.detail }}</td>
-                </tr>
-              {% endfor %}
-            </tbody>
-          </table>
-        </div>
-      {% endif %}
-    </main>
-  </body>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>hh35 | مولد وفحص الاختصارات</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+<header>
+  <span>حقوقي دس hh35.</span>
+  <nav><a href="{{ url_for('home') }}">الرئيسية</a><a href="{{ url_for('names') }}">مولد اليوزرات</a><a href="{{ url_for('shortcuts') }}">اختصارات Discord</a></nav>
+</header>
+<main class="wide">
+  <div class="panel">
+    <h1>مولد اختصارات Discord</h1>
+    <p>اختر نوع الاختصار وطوله، ثم اضغط تشغيل. هذه اقتراحات مولّدة وليست تأكيدًا للتوفر الفعلي.</p>
+    <div class="length-buttons mode-buttons">
+      <label class="length-option"><input type="radio" name="mode" value="invite" checked><span>اختصار دعوة Discord</span></label>
+      <label class="length-option"><input type="radio" name="mode" value="directory"><span>اسم اختصار الأدلة</span></label>
+    </div>
+    <div class="length-buttons">
+      <label class="length-option"><input type="radio" name="length" value="2"><span>ثنائي</span></label>
+      <label class="length-option"><input type="radio" name="length" value="3"><span>ثلاثي</span></label>
+      <label class="length-option"><input type="radio" name="length" value="4" checked><span>رباعي</span></label>
+      <label class="length-option"><input type="radio" name="length" value="5"><span>خماسي</span></label>
+    </div>
+    <div class="control-row">
+      <button id="startButton" class="run-button" type="button">تشغيل</button>
+      <button id="stopButton" class="stop-button" type="button" disabled>إيقاف</button>
+    </div>
+    <p id="generatorStatus">متوقف</p>
+  </div>
+  <div class="results-box">
+    <h2>الاقتراحات</h2>
+    <div id="generatedResults" class="names-grid"></div>
+    <small>اضغط على أي اقتراح لنسخه.</small>
+  </div>
+  <div class="panel" style="margin-top:28px">
+    <h2>فحص اختصار موجود</h2>
+    <p>اكتب الاختصار يدويًا لفحص دعوة Discord أو البحث في الأدلة العامة.</p>
+    <form method="post" class="checker-form">
+      <select name="kind">
+        <option value="invite">اختصار دعوة Discord</option>
+        <option value="username">اسم/اختصار في الأدلة</option>
+      </select>
+      <input name="value" placeholder="hh35" required>
+      <button>فحص</button>
+    </form>
+  </div>
+  {% if results %}
+  <div class="results-box">
+    <h2>نتيجة الفحص</h2>
+    <table><thead><tr><th>المصدر</th><th>الحالة</th><th>التفاصيل</th></tr></thead><tbody>
+    {% for row in results %}<tr><td>{{ row.name }}</td><td class="status {{ 'used' if row.status == 'مستخدم' else 'safe' if row.status == 'غير موجود' else 'unknown' }}">{{ row.status }}</td><td>{{ row.detail }}</td></tr>{% endfor %}
+    </tbody></table>
+  </div>
+  {% endif %}
+</main>
+<script>
+const alphabet='abcdefghijklmnopqrstuvwxyz0123456789';
+const resultBox=document.getElementById('generatedResults');
+const statusText=document.getElementById('generatorStatus');
+const startButton=document.getElementById('startButton');
+const stopButton=document.getElementById('stopButton');
+let timer=null;
+function generate(){
+  const mode=document.querySelector('input[name="mode"]:checked').value;
+  const length=Number(document.querySelector('input[name="length"]:checked').value);
+  const values=new Set();
+  while(values.size<40){
+    let value='';
+    for(let i=0;i<length;i++) value+=alphabet[Math.floor(Math.random()*alphabet.length)];
+    if(mode==='directory' && length>=3 && Math.random()<0.35){
+      const point=Math.floor(Math.random()*(length-1))+1;
+      value=value.slice(0,point)+'.'+value.slice(point);
+    }
+    values.add(value);
+  }
+  resultBox.innerHTML='';
+  for(const value of values){
+    const button=document.createElement('button');
+    button.type='button'; button.className='name-chip';
+    button.textContent=mode==='invite'?'discord.gg/'+value:value;
+    button.onclick=()=>navigator.clipboard&&navigator.clipboard.writeText(value);
+    resultBox.appendChild(button);
+  }
+}
+function start(){if(timer)return;generate();timer=setInterval(generate,1200);startButton.disabled=true;stopButton.disabled=false;statusText.textContent='يعمل الآن';}
+function stop(){clearInterval(timer);timer=null;startButton.disabled=false;stopButton.disabled=true;statusText.textContent='تم الإيقاف';}
+startButton.onclick=start; stopButton.onclick=stop;
+</script>
+</body>
 </html>
