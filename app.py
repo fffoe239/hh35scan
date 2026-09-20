@@ -55,19 +55,19 @@ def check_public_sources(value):
     return results
 
 def generate_names(length, amount=40):
-    # Usernames are varied, at least three alphanumeric characters, with an optional dot.
-    min_core = max(3, length + 1)
-    max_core = min(8, min_core + 2)
+    # The selected category controls the alphanumeric length: double=3, triple=4, quad=5, penta=6.
+    core_length = max(3, int(length) + 1)
     alphabet = string.ascii_lowercase + string.digits
-    values=set()
-    while len(values)<amount:
-        core_len=random.randint(min_core, max_core)
-        core=''.join(random.choice(alphabet) for _ in range(core_len))
-        if random.random() < 0.65 and core_len >= 3:
-            point=random.randint(1, core_len-1)
-            value=core[:point]+'.'+core[point:]
-        else: value=core
-        if sum(ch.isalnum() for ch in value) >= 3 and '..' not in value: values.add(value)
+    values = set()
+    while len(values) < amount:
+        core = ''.join(random.choice(alphabet) for _ in range(core_length))
+        # A dot is optional and does not count toward the selected username length.
+        if random.random() < 0.65:
+            point = random.randint(1, core_length - 1)
+            value = f'{core[:point]}.{core[point:]}'
+        else:
+            value = core
+        values.add(value)
     return sorted(values)
 
 @app.route('/', methods=['GET','POST'])
