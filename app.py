@@ -14,7 +14,9 @@ CHECK_SOURCES = [{"name": "DISBOARD", "url": "https://www.disboard.org/search?ke
 
 
 def db():
-    c = sqlite3.connect(DB_PATH); c.row_factory = sqlite3.Row; return c
+    c = sqlite3.connect(DB_PATH)
+    c.row_factory = sqlite3.Row
+    return c
 
 
 def init_db():
@@ -39,6 +41,12 @@ def admin_required(view):
     return wrapped
 
 
+@app.before_request
+def protect_tools():
+    if request.endpoint in {'names', 'shortcuts', 'checker'} and not (session.get('subscriber') or session.get('admin_role')):
+        return redirect(url_for('home'))
+
+
 def role_for_code(value):
     if secrets.compare_digest(value, OWNER_CODE): return 'owner'
     if secrets.compare_digest(value, FRIEND_CODE):
@@ -59,7 +67,7 @@ def check_public_sources(value):
     return results
 
 
-def generate_names(length, amount=40, shortcut=False):
+def generate_names(length, amount=40):
     alphabet = string.ascii_lowercase + string.digits
     values=set()
     while len(values)<amount:
@@ -82,8 +90,7 @@ def home():
         elif row['device_hash'] and row['device_hash'] != device_hash(): flash('هذا الكود مرتبط بجهاز آخر','error')
         else:
             expires=now()+timedelta(days=DURATIONS[row['duration']][1])
-            with db() as c:
-                c.execute('UPDATE codes SET device_hash=COALESCE(?,device_hash), expires_at=COALESCE(?,expires_at) WHERE id=?',(device_hash(),expires.isoformat(),row['id']))
+            with db() as c: c.execute('UPDATE codes SET device_hash=COALESCE(?,device_hash), expires_at=COALESCE(?,expires_at) WHERE id=?',(device_hash(),expires.isoformat(),row['id']))
             session.clear(); session['subscriber']=True; return redirect(url_for('subscriber'))
     return render_template('home.html')
 
@@ -97,8 +104,7 @@ def names():
 
 
 @app.route('/shortcuts')
-def shortcuts():
-    return render_template('shortcuts.html')
+def shortcuts(): return render_template('shortcuts.html')
 
 
 @app.route('/checker', methods=['GET','POST'])
@@ -120,18 +126,23 @@ def checker():
 
 
 @app.route('/subscriber')
-def subscriber():
-    return render_template('subscriber.html') if session.get('subscriber') else redirect(url_for('home'))
+def subscriber(): return render_template('subscriber.html') if session.get('subscriber') else redirect(url_for('home'))
 
 
 @app.route('/admin')
 @admin_required
 def admin():
-    role=session['admin_role']
+    role=session['admin_role']; search=request.args.get('q','').strip()
     with db() as c:
-        query='SELECT * FROM codes ORDER BY id DESC' if role=='owner' else "SELECT * FROM codes WHERE created_by='friend' ORDER BY id DESC"
-        rows=c.execute(query).fetchall(); friend_enabled=c.execute("SELECT enabled FROM admin_access WHERE role='friend'").fetchone()['enabled']
-    return render_template('admin.html',codes=rows,status=status,durations=DURATIONS,role=role,friend_enabled=friend_enabled)
+        if role=='owner':
+            if search:
+                rows=c.execute("SELECT * FROM codes WHERE code LIKE ? OR created_by LIKE ? ORDER BY id DESC",(f'%{search}%',f'%{search}%')).fetchall()
+            else: rows=c.execute('SELECT * FROM codes ORDER BY id DESC').fetchall()
+        else:
+            if search:
+                rows=c.execute("SELECT * FROM codes WHERE created_by='friend' AND code LIKE ? ORDER BY id DESC",(f'%{search}%',)).fetchall()
+            else: rows=c.execute("SELECT * FROM codes WHERE created_by='friend' ORDER BY id DESC").fetchall()
+    return render_template('admin.html',codes=rows,status=status,durations=DURATIONS,role=role,search=search)
 
 
 @app.post('/admin/codes')
@@ -163,15 +174,6 @@ def delete_code(code_id):
     with db() as c:
         row=c.execute('SELECT created_by FROM codes WHERE id=?',(code_id,)).fetchone()
         if row and (session['admin_role']=='owner' or row['created_by']=='friend'): c.execute('DELETE FROM codes WHERE id=?',(code_id,))
-    return redirect(url_for('admin'))
-
-
-@app.post('/admin/friend/toggle')
-@admin_required
-def toggle_friend():
-    if session['admin_role']=='owner':
-        with db() as c:
-            row=c.execute("SELECT enabled FROM admin_access WHERE role='friend'").fetchone(); c.execute("UPDATE admin_access SET enabled=? WHERE role='friend'",(0 if row['enabled'] else 1,))
     return redirect(url_for('admin'))
 
 
