@@ -1,20 +1,14 @@
 <!doctype html>
 <html lang="ar" dir="rtl">
-  <head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width,initial-scale=1">
-    <title>hh35 | المحتوى</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
-  </head>
-  <body>
-    <header>
-      <span>حقوقي دس hh35.</span>
-      <a href="{{ url_for('logout') }}">تسجيل الخروج</a>
-    </header>
-    <main class="card">
-      <span class="mark">✓</span>
-      <h1>تم التحقق بنجاح</h1>
-      <p>مرحبًا بك في شاشة المستخدم الخاصة بالمشتركين.</p>
-    </main>
-  </body>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta http-equiv="refresh" content="0; url={{ url_for('checker') }}">
+  <title>hh35 | جاري التحويل</title>
+  <script>window.location.replace("{{ url_for('checker') }}");</script>
+</head>
+<body style="background:#080808;color:#fff;font-family:Tahoma,Arial,sans-serif;text-align:center;padding:60px">
+  <p>جاري فتح الأدوات...</p>
+  <a href="{{ url_for('checker') }}" style="color:#fff">اضغط هنا إذا لم يتم التحويل</a>
+</body>
 </html>
