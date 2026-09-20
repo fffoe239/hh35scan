@@ -1,29 +1,5 @@
 <!doctype html>
 <html lang="ar" dir="rtl">
-  <head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width,initial-scale=1">
-    <title>hh35 | دخول</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
-  </head>
-  <body>
-    <header>
-      <span>حقوقي دس hh35.</span>
-      <a href="{{ url_for('checker') }}">فحص الاسم</a>
-    </header>
-    <main class="card">
-      <span class="mark">HH35</span>
-      <h1>الدخول إلى الموقع</h1>
-      <p>أدخل كود الاشتراك أو كود المدير.</p>
-      {% with messages = get_flashed_messages(with_categories=true) %}
-        {% for category, message in messages %}
-          <div class="alert {{ category }}">{{ message }}</div>
-        {% endfor %}
-      {% endwith %}
-      <form method="post">
-        <input name="code" placeholder="hh35-SKA-MXK-XMR" autocomplete="off" required>
-        <button>تحقق من الكود</button>
-      </form>
-    </main>
-  </body>
-</html>
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>hh35 | دخول</title><link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}"></head>
+<body><header><span>حقوقي دس hh35.</span><nav><a href="{{ url_for('checker') }}">فحص الاسم</a><a href="{{ url_for('names') }}">مولد اليوزرات</a></nav></header>
+<main class="card"><span class="mark">HH35</span><h1>الدخول إلى الموقع</h1><p>أدخل كود الاشتراك أو كود المدير.</p>{% with messages = get_flashed_messages(with_categories=true) %}{% for category, message in messages %}<div class="alert {{ category }}">{{ message }}</div>{% endfor %}{% endwith %}<form method="post"><input name="code" placeholder="hh35-SKA-MXK-XMR" autocomplete="off" required><button>تحقق من الكود</button></form><a class="third-button" href="{{ url_for('names') }}">مولد يوزرات Discord</a></main></body></html>
